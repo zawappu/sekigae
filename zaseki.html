@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>座席設定ページ</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    td { width: 40px; height: 40px; text-align: center; border: 1px solid #ccc; }
+    input[type="checkbox"] { transform: scale(1.2); }
+    button, a { margin-top: 15px; display: inline-block; padding: 6px 12px; text-decoration: none; }
+    a { background-color: #eee; border: 1px solid #ccc; color: #333; }
+  </style>
+</head>
+<body>
+  <h2>使用する座席の設定</h2>
+  <p>チェックを入れた席が使用されます。設定は保存され、席替えページで反映されます。</p>
+
+  <table id="seatConfig"></table>
+  <button onclick="saveSeatConfig()">設定を保存</button>
+  <a href="index.html">席替えページに戻る</a>
+
+  <script>
+    const rows = 6, cols = 6;
+    let seatStatus = Array.from({length: rows}, () => Array(cols).fill(true));
+
+    function renderSeatConfig() {
+      const table = document.getElementById("seatConfig");
+      table.innerHTML = "";
+      for (let r = 0; r < rows; r++) {
+        const tr = document.createElement("tr");
+        for (let c = 0; c < cols; c++) {
+          const td = document.createElement("td");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = seatStatus[r][c];
+          checkbox.onchange = () => seatStatus[r][c] = checkbox.checked;
+          td.appendChild(checkbox);
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+    }
+
+    function saveSeatConfig() {
+      localStorage.setItem("seatStatus", JSON.stringify(seatStatus));
+      alert("座席設定を保存しました");
+    }
+
+    function loadSeatConfig() {
+      const saved = localStorage.getItem("seatStatus");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            seatStatus[r][c] = parsed[r][c];
+          }
+        }
+      }
+      renderSeatConfig();
+    }
+
+    window.onload = loadSeatConfig;
+  </script>
+</body>
+</html>

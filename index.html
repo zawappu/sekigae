@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>席替え実行ページ</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    td { width: 150px; height: 40px; text-align: center; border: 1px solid #ccc; }
+    .inactive { background-color: #eee; color: #aaa; }
+    button, a { margin-top: 10px; padding: 6px 12px; display: inline-block; text-decoration: none; }
+    a { background-color: #eee; border: 1px solid #ccc; color: #333; }
+    #savedInfo { margin-top: 15px; font-weight: bold; }
+    #historyList { margin-top: 20px; }
+    .historyBlock { margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>席替えを実行</h1>
+
+  <button onclick="assignSeats()">席替えを実行する</button>
+  <button onclick="confirmReset()">生徒リスト以外のデータを消去</button>
+  <button onclick="saveFinalSeats()">この座席で決定</button>
+
+  <div id="savedInfo"></div>
+
+  <h3>座席表</h3>
+  <table id="seatMap"></table>
+
+  <br>
+  <a href="seito.html">生徒登録ページへ</a>
+  <a href="zaseki.html">座席設定ページへ</a>
+
+  <div id="historyList">
+    <h3>保存された履歴</h3>
+  </div>
+
+  <script>
+    const rows = 6, cols = 6;
+    let seatStatus = Array.from({length: rows}, () => Array(cols).fill(true));
+    let students = [];
+    let forbiddenPairs = [];
+    let lastPairs = [];
+    let fixedSeats = [];
+    let currentSeatMap = null;
+
+    function loadData() {
+      const seatData = localStorage.getItem("seatStatus");
+      if (seatData) seatStatus = JSON.parse(seatData);
+
+      const studentData = localStorage.getItem("studentList");
+      if (studentData) students = JSON.parse(studentData).map(pair => pair[1]);
+
+      const forbiddenData = localStorage.getItem("forbiddenPairs");
+      if (forbiddenData) forbiddenPairs = JSON.parse(forbiddenData);
+
+      const last = localStorage.getItem("lastPairs");
+      if (last) lastPairs = JSON.parse(last);
+
+      const fixedData = localStorage.getItem("fixedSeats");
+      if (fixedData) fixedSeats = JSON.parse(fixedData);
+
+      const history = localStorage.getItem("seatHistory");
+      if (history) {
+        const list = JSON.parse(history);
+        list.forEach(entry => renderHistory(entry));
+      }
+    }
+
+    function violatesForbidden(seatMap) {
+      const nameToPos = {};
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const name = seatMap[r][c];
+          if (name) nameToPos[name] = [r, c];
+        }
+      }
+      for (const [a, b] of forbiddenPairs) {
+        const posA = nameToPos[a], posB = nameToPos[b];
+        if (posA && posB && posA[0] === posB[0] && Math.abs(posA[1] - posB[1]) === 1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function violatesHistory(seatMap) {
+      const pairs = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          if (!seatStatus[r][c] || !seatStatus[r][c+1]) continue;
+          const a = seatMap[r][c];
+          const b = seatMap[r][c+1];
+          if (a && b && a !== b) {
+            pairs.push([a, b].sort().join(","));
+          }
+        }
+      }
+      for (const p of pairs) {
+        if (lastPairs.includes(p)) return true;
+      }
+      return false;
+    }
+
+    function assignSeats() {
+      const availableSeats = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (seatStatus[r][c]) availableSeats.push([r, c]);
+        }
+      }
+
+      if (students.length > availableSeats.length) {
+        alert("使用可能な席より生徒数が多いため配置できません");
+        return;
+      }
+
+      let attempts = 1000;
+      let seatMap;
+      while (attempts-- > 0) {
+        const shuffled = [...students].sort(() => Math.random() - 0.5);
+        seatMap = Array.from({length: rows}, () => Array(cols).fill(""));
+
+        const usedNames = new Set();
+        for (const { name, row, col } of fixedSeats) {
+          if (seatStatus[row]?.[col]) {
+            seatMap[row][col] = name;
+            usedNames.add(name);
+          }
+        }
+
+        const remaining = shuffled.filter(name => !usedNames.has(name));
+        let i = 0;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (seatStatus[r][c] && !seatMap[r][c]) {
+              seatMap[r][c] = remaining[i++] || "";
+            }
+          }
+        }
+
+        if (!violatesForbidden(seatMap) && !violatesHistory(seatMap)) break;
+        seatMap = null;
+      }
+
+      if (!seatMap) {
+        alert("禁止ペアまたは履歴を避けた配置が見つかりませんでした");
+        return;
+      }
+
+      currentSeatMap = seatMap;
+      renderSeatMap(seatMap);
+    }
+
+    function renderSeatMap(seatMap) {
+      const table = document.getElementById("seatMap");
+      table.innerHTML = "";
+      for (let r = 0; r < rows; r++) {
+        const tr = document.createElement("tr");
+        for (let c = 0; c < cols; c++) {
+          const td = document.createElement("td");
+          if (seatStatus[r][c]) {
+            td.textContent = seatMap[r][c];
+          } else {
+            td.classList.add("inactive");
+            td.textContent = "×";
+          }
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+    }
+
+    function saveFinalSeats() {
+      if (!currentSeatMap) {
+        alert("席替えを実行してから保存してください");
+        return;
+      }
+
+      const now = new Date();
+      const dateStr = now.toLocaleString("ja-JP");
+
+      const pairs = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          if (!seatStatus[r][c] || !seatStatus[r][c+1]) continue;
+          const a = currentSeatMap[r][c];
+          const b = currentSeatMap[r][c+1];
+          if (a && b && a !== b) {
+            pairs.push([a, b].sort().join(","));
+          }
+        }
+      }
+
+      lastPairs = pairs;
+      localStorage.setItem("lastPairs", JSON.stringify(lastPairs));
+
+      const entry = { date: dateStr, map: currentSeatMap };
+      const history = JSON.parse(localStorage.getItem("seatHistory") || "[]");
+      history.push(entry);
+      localStorage.setItem("seatHistory", JSON.stringify(history));
+
+      renderHistory(entry);
+      document.getElementById("savedInfo").textContent = `最後に保存された座席（${dateStr}）`;
+      alert("座席を保存しました");
+    }
+
+    function renderHistory(entry) {
+  const div = document.createElement("div");
+  div.className = "historyBlock";
+  div.innerHTML = `<strong>${entry.date}</strong><br>`;
+
+  const table = document.createElement("table");
+  for (let r = 0; r < rows; r++) {
+    const tr = document.createElement("tr");
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement("td");
+      if (seatStatus[r][c]) {
+        td.textContent = entry.map[r][c] || "";
+      } else {
+        td.classList.add("inactive");
+        td.textContent = "×";
+      }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+
+  div.appendChild(table);
+  document.getElementById("historyList").appendChild(div);
+}
+
+
+    function confirmReset() {
+      if (confirm("生徒リストを除くすべてのデータを消去しますか？（座席設定・禁止ペア・履歴・保存済み座席・特定配置）")) {
+        const studentList = localStorage.getItem("studentList");
+        localStorage.clear();
+        if (studentList) {
+          localStorage.setItem("studentList", studentList);
+        }
+        location.reload();
+      }
+    }
+    window.onload = loadData;
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>生徒登録ページ</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; }
+    textarea { width: 100%; height: 200px; margin-bottom: 10px; }
+    input[type="file"] { margin-bottom: 10px; }
+    button, a { margin-top: 10px; padding: 6px 12px; display: inline-block; text-decoration: none; }
+    a { background-color: #eee; border: 1px solid #ccc; color: #333; }
+    h2 { margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <h1>生徒登録・禁止ペア・特定配置設定</h1>
+
+  <h2>① 生徒リスト（出席番号,名前）</h2>
+  <p>手入力またはCSVファイルで登録できます。1行に「番号,名前」の形式で入力してください。</p>
+  <textarea id="studentInput" placeholder="1,佐藤\n2,鈴木\n3,高橋"></textarea>
+  <input type="file" accept=".csv" onchange="loadCSV(event)">
+  <button onclick="saveStudents()">生徒データを保存</button>
+
+  <h2>② 禁止ペア（隣にしない）</h2>
+  <p>1行に「名前1,名前2」の形式で入力してください。</p>
+  <textarea id="forbiddenInput" placeholder="佐藤,鈴木\n高橋,田中"></textarea>
+  <button onclick="saveForbidden()">禁止ペアを保存</button>
+
+  <h2>③ 特定配置（座席位置を指定）</h2>
+  <p>1行に「名前,行番号,列番号」の形式で入力してください（例：佐藤,1,2）<br>※行・列は0から始まります（前から2番目＝行1,2）</p>
+  <textarea id="fixedInput" placeholder="佐藤,1,2\n鈴木,5,3"></textarea>
+  <button onclick="saveFixedSeats()">特定配置を保存</button>
+
+  <br><br>
+  <a href="index.html">席替えページに戻る</a>
+
+  <script>
+    function loadCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        document.getElementById("studentInput").value = text.trim();
+      };
+      reader.readAsText(file);
+    }
+
+    function saveStudents() {
+      const input = document.getElementById("studentInput").value.trim();
+      const lines = input.split("\n").map(line => line.split(",").map(s => s.trim()));
+      const valid = lines.filter(pair => pair.length === 2 && pair[0] && pair[1]);
+      localStorage.setItem("studentList", JSON.stringify(valid));
+      alert("生徒データを保存しました");
+    }
+
+    function saveForbidden() {
+      const input = document.getElementById("forbiddenInput").value.trim();
+      const lines = input.split("\n").map(line => line.split(",").map(s => s.trim()));
+      const valid = lines.filter(pair => pair.length === 2 && pair[0] && pair[1]);
+      localStorage.setItem("forbiddenPairs", JSON.stringify(valid));
+      alert("禁止ペアを保存しました");
+    }
+
+    function saveFixedSeats() {
+      const input = document.getElementById("fixedInput").value.trim();
+      const lines = input.split("\n").map(line => {
+        const [name, row, col] = line.split(",").map(s => s.trim());
+        return name && !isNaN(row) && !isNaN(col) ? { name, row: parseInt(row), col: parseInt(col) } : null;
+      }).filter(Boolean);
+      localStorage.setItem("fixedSeats", JSON.stringify(lines));
+      alert("特定配置を保存しました");
+    }
+
+    window.onload = () => {
+      const savedStudents = localStorage.getItem("studentList");
+      if (savedStudents) {
+        const lines = JSON.parse(savedStudents).map(pair => pair.join(",")).join("\n");
+        document.getElementById("studentInput").value = lines;
+      }
+
+      const savedForbidden = localStorage.getItem("forbiddenPairs");
+      if (savedForbidden) {
+        const lines = JSON.parse(savedForbidden).map(pair => pair.join(",")).join("\n");
+        document.getElementById("forbiddenInput").value = lines;
+      }
+
+      const savedFixed = localStorage.getItem("fixedSeats");
+      if (savedFixed) {
+        const lines = JSON.parse(savedFixed).map(entry => `${entry.name},${entry.row},${entry.col}`).join("\n");
+        document.getElementById("fixedInput").value = lines;
+      }
+    };
+  </script>
+</body>
+</html>
