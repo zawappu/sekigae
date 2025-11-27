@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>生徒登録ページ</title>
+  <title>生徒登録ページ v2</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 800px; }
     textarea { width: 100%; height: 200px; margin-bottom: 10px; }
@@ -13,7 +13,7 @@
   </style>
 </head>
 <body>
-  <h1>生徒登録・禁止ペア・特定配置設定</h1>
+  <h1>生徒登録・禁止ペア・特定配置設定 (v2)</h1>
 
   <h2>① 生徒リスト（出席番号,名前）</h2>
   <p>手入力またはCSVファイルで登録できます。1行に「番号,名前」の形式で入力してください。</p>
@@ -27,7 +27,8 @@
   <button onclick="saveForbidden()">禁止ペアを保存</button>
 
   <h2>③ 特定配置（座席位置を指定）</h2>
-  <p>1行に「名前,行番号,列番号」の形式で入力してください（例：佐藤,1,2）<br>※行・列は0から始まります（前から2番目＝行1,2）</p>
+  <p>1行に「名前,行番号,列番号」の形式で入力してください（例：佐藤,1,2）<br>
+     ※行・列は0から始まります（前から2番目＝行1,2）</p>
   <textarea id="fixedInput" placeholder="佐藤,1,2\n鈴木,5,3"></textarea>
   <button onclick="saveFixedSeats()">特定配置を保存</button>
 
@@ -51,7 +52,7 @@
       const input = document.getElementById("studentInput").value.trim();
       const lines = input.split("\n").map(line => line.split(",").map(s => s.trim()));
       const valid = lines.filter(pair => pair.length === 2 && pair[0] && pair[1]);
-      localStorage.setItem("studentList", JSON.stringify(valid));
+      localStorage.setItem("studentList_v2", JSON.stringify(valid)); // ✅ v2キー
       alert("生徒データを保存しました");
     }
 
@@ -59,7 +60,7 @@
       const input = document.getElementById("forbiddenInput").value.trim();
       const lines = input.split("\n").map(line => line.split(",").map(s => s.trim()));
       const valid = lines.filter(pair => pair.length === 2 && pair[0] && pair[1]);
-      localStorage.setItem("forbiddenPairs", JSON.stringify(valid));
+      localStorage.setItem("forbiddenPairs_v2", JSON.stringify(valid)); // ✅ v2キー
       alert("禁止ペアを保存しました");
     }
 
@@ -69,24 +70,24 @@
         const [name, row, col] = line.split(",").map(s => s.trim());
         return name && !isNaN(row) && !isNaN(col) ? { name, row: parseInt(row), col: parseInt(col) } : null;
       }).filter(Boolean);
-      localStorage.setItem("fixedSeats", JSON.stringify(lines));
+      localStorage.setItem("fixedSeats_v2", JSON.stringify(lines)); // ✅ v2キー
       alert("特定配置を保存しました");
     }
 
     window.onload = () => {
-      const savedStudents = localStorage.getItem("studentList");
+      const savedStudents = localStorage.getItem("studentList_v2"); // ✅ v2キー
       if (savedStudents) {
         const lines = JSON.parse(savedStudents).map(pair => pair.join(",")).join("\n");
         document.getElementById("studentInput").value = lines;
       }
 
-      const savedForbidden = localStorage.getItem("forbiddenPairs");
+      const savedForbidden = localStorage.getItem("forbiddenPairs_v2"); // ✅ v2キー
       if (savedForbidden) {
         const lines = JSON.parse(savedForbidden).map(pair => pair.join(",")).join("\n");
         document.getElementById("forbiddenInput").value = lines;
       }
 
-      const savedFixed = localStorage.getItem("fixedSeats");
+      const savedFixed = localStorage.getItem("fixedSeats_v2"); // ✅ v2キー
       if (savedFixed) {
         const lines = JSON.parse(savedFixed).map(entry => `${entry.name},${entry.row},${entry.col}`).join("\n");
         document.getElementById("fixedInput").value = lines;
