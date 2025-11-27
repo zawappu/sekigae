@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>座席設定ページ</title>
+  <title>座席設定ページ v2</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     table { border-collapse: collapse; margin-top: 10px; }
@@ -13,12 +13,12 @@
   </style>
 </head>
 <body>
-  <h2>使用する座席の設定</h2>
+  <h2>使用する座席の設定 (v2)</h2>
   <p>チェックを入れた席が使用されます。設定は保存され、席替えページで反映されます。</p>
 
   <table id="seatConfig"></table>
   <button onclick="saveSeatConfig()">設定を保存</button>
-  <a href="index.html">席替えページに戻る</a>
+  <a href="zikkou_v2.html">席替えページに戻る</a>
 
   <script>
     const rows = 6, cols = 6;
@@ -43,12 +43,12 @@
     }
 
     function saveSeatConfig() {
-      localStorage.setItem("seatStatus", JSON.stringify(seatStatus));
+      localStorage.setItem("seatStatus_v2", JSON.stringify(seatStatus)); // ✅ v2キー
       alert("座席設定を保存しました");
     }
 
     function loadSeatConfig() {
-      const saved = localStorage.getItem("seatStatus");
+      const saved = localStorage.getItem("seatStatus_v2"); // ✅ v2キー
       if (saved) {
         const parsed = JSON.parse(saved);
         for (let r = 0; r < rows; r++) {
