@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>席替え実行ページ</title>
+  <title>席替え実行ページ v2</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     table { border-collapse: collapse; margin-top: 10px; }
@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>席替えを実行</h1>
+  <h1>席替えを実行 (v2)</h1>
 
   <button onclick="assignSeats()">席替えを実行する</button>
   <button onclick="confirmReset()">生徒リスト以外のデータを消去</button>
@@ -28,8 +28,8 @@
   <table id="seatMap"></table>
 
   <br>
-  <a href="seito.html">生徒登録ページへ</a>
-  <a href="zaseki.html">座席設定ページへ</a>
+  <a href="seito_v2.html">生徒登録ページへ</a>
+  <a href="zaseki_v2.html">座席設定ページへ</a>
 
   <div id="historyList">
     <h3>保存された履歴</h3>
@@ -45,22 +45,22 @@
     let currentSeatMap = null;
 
     function loadData() {
-      const seatData = localStorage.getItem("seatStatus");
+      const seatData = localStorage.getItem("seatStatus_v2");
       if (seatData) seatStatus = JSON.parse(seatData);
 
-      const studentData = localStorage.getItem("studentList");
+      const studentData = localStorage.getItem("studentList_v2");
       if (studentData) students = JSON.parse(studentData).map(pair => pair[1]);
 
-      const forbiddenData = localStorage.getItem("forbiddenPairs");
+      const forbiddenData = localStorage.getItem("forbiddenPairs_v2");
       if (forbiddenData) forbiddenPairs = JSON.parse(forbiddenData);
 
-      const last = localStorage.getItem("lastPairs");
+      const last = localStorage.getItem("lastPairs_v2");
       if (last) lastPairs = JSON.parse(last);
 
-      const fixedData = localStorage.getItem("fixedSeats");
+      const fixedData = localStorage.getItem("fixedSeats_v2");
       if (fixedData) fixedSeats = JSON.parse(fixedData);
 
-      const history = localStorage.getItem("seatHistory");
+      const history = localStorage.getItem("seatHistory_v2");
       if (history) {
         const list = JSON.parse(history);
         list.forEach(entry => renderHistory(entry));
@@ -193,12 +193,12 @@
       }
 
       lastPairs = pairs;
-      localStorage.setItem("lastPairs", JSON.stringify(lastPairs));
+      localStorage.setItem("lastPairs_v2", JSON.stringify(lastPairs));
 
       const entry = { date: dateStr, map: currentSeatMap };
-      const history = JSON.parse(localStorage.getItem("seatHistory") || "[]");
+      const history = JSON.parse(localStorage.getItem("seatHistory_v2") || "[]");
       history.push(entry);
-      localStorage.setItem("seatHistory", JSON.stringify(history));
+      localStorage.setItem("seatHistory_v2", JSON.stringify(history));
 
       renderHistory(entry);
       document.getElementById("savedInfo").textContent = `最後に保存された座席（${dateStr}）`;
@@ -206,41 +206,41 @@
     }
 
     function renderHistory(entry) {
-  const div = document.createElement("div");
-  div.className = "historyBlock";
-  div.innerHTML = `<strong>${entry.date}</strong><br>`;
+      const div = document.createElement("div");
+      div.className = "historyBlock";
+      div.innerHTML = `<strong>${entry.date}</strong><br>`;
 
-  const table = document.createElement("table");
-  for (let r = 0; r < rows; r++) {
-    const tr = document.createElement("tr");
-    for (let c = 0; c < cols; c++) {
-      const td = document.createElement("td");
-      if (seatStatus[r][c]) {
-        td.textContent = entry.map[r][c] || "";
-      } else {
-        td.classList.add("inactive");
-        td.textContent = "×";
+      const table = document.createElement("table");
+      for (let r = 0; r < rows; r++) {
+        const tr = document.createElement("tr");
+        for (let c = 0; c < cols; c++) {
+          const td = document.createElement("td");
+          if (seatStatus[r][c]) {
+                        td.textContent = entry.map[r][c] || "";
+          } else {
+            td.classList.add("inactive");
+            td.textContent = "×";
+          }
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
       }
-      tr.appendChild(td);
+
+      div.appendChild(table);
+      document.getElementById("historyList").appendChild(div);
     }
-    table.appendChild(tr);
-  }
-
-  div.appendChild(table);
-  document.getElementById("historyList").appendChild(div);
-}
-
 
     function confirmReset() {
       if (confirm("生徒リストを除くすべてのデータを消去しますか？（座席設定・禁止ペア・履歴・保存済み座席・特定配置）")) {
-        const studentList = localStorage.getItem("studentList");
+        const studentList = localStorage.getItem("studentList_v2");
         localStorage.clear();
         if (studentList) {
-          localStorage.setItem("studentList", studentList);
+          localStorage.setItem("studentList_v2", studentList);
         }
         location.reload();
       }
     }
+
     window.onload = loadData;
   </script>
 </body>
