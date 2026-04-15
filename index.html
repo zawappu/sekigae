@@ -231,7 +231,7 @@
     }
 
     function confirmReset() {
-      if (confirm("生徒リストを除くすべてのデータを消去しますか？（座席設定・禁止ペア・履歴・保存済み座席・特定配置）")) {
+      if (confirm("生徒リストを除くすべてのデータを消去しますか？（座席設定・履歴・保存済み座席・特定配置）")) {
         const studentList = localStorage.getItem("studentList_v2");
         localStorage.clear();
         if (studentList) {
